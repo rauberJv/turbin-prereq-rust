@@ -1,3 +1,5 @@
+mod programs;
+
 fn main() {
     println!("Hello, world!");
 }
@@ -12,6 +14,8 @@ mod tests {
         transaction::Transaction,
         message::Message,
     };
+    use solana_program::system_program;
+    use crate::programs::turbin3_prereq::{WbaPrereqProgram, CompleteArgs, UpdateArgs};
     use std::str::FromStr;
 
     #[test]
@@ -73,8 +77,35 @@ mod tests {
             recent_blockhash,
         );
 
-        let signature = rpc_client.send_and_confirm_transaction(&transaction).expect("Failed to send transaction");
+        let signature = rpc_client.send_and_confirm_transaction(&transaction).expect("Transfer: Failed to send transaction");
         println!("Success, check your tx here: {}", signature.to_string());
         //Todo: Finish transfer sol and add verification of amount to empty local wallet
+    }
+
+    #[test]
+    fn enroll() {
+        let signer = read_keypair_file("turbin3-wallet.json").expect("Couldn't find wallet file");
+        
+        let prereq = WbaPrereqProgram::derive_program_address(&[b"prereq",signer.pubkey().to_bytes().as_ref()]);
+
+        // println!("The prereq is {}", prereq.to_string());
+
+        let args = CompleteArgs{
+            github: b"rauberJv".to_vec()
+        };
+
+        const RPC_URL: &str = "https://api.devnet.solana.com";
+
+        let rpc_client = RpcClient::new(RPC_URL);
+
+        let recent_blockhash = rpc_client
+        .get_latest_blockhash()
+        .expect("Failed to get recent blockhash");
+
+        let transaction = WbaPrereqProgram::complete(&[&signer.pubkey(), &prereq, &system_program::id()], &args, Some(&signer.pubkey()), &[&signer], recent_blockhash);
+
+        let signature = rpc_client.send_and_confirm_transaction(&transaction).expect("Enroll: Failed to send transaction.");
+
+        println!("Success! Check your TX here: https://explorer.solana.com/tx/{}?cluster=devnet", signature);
     }
 }
