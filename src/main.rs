@@ -18,6 +18,11 @@ mod tests {
     use crate::programs::turbin3_prereq::{WbaPrereqProgram, CompleteArgs, UpdateArgs};
     use std::str::FromStr;
 
+    const RPC_URL: &str = "https://api.devnet.solana.com";
+    const TURBIN3_WALLET: &str = "turbin3-wallet.json";
+    const TURBIN3_WALLET_PKEY: &str = "CJM2LnrH6byLP2ExkwvZRgTyhAM1xaJffHRS5Q3A68S";
+    const DEV_WALLET: &str = "dev-wallet.json";
+
     #[test]
     fn keygen() {
         let kp = Keypair::new();
@@ -27,8 +32,7 @@ mod tests {
 
     #[test]
     fn airdrop() {
-        const RPC_URL: &str = "https://api.devnet.solana.com";
-        let keypair = read_keypair_file("./dev-wallet.json").expect("Could not find the wallet, make sure you generated the dev-wallet.json file with correct wallet");
+        let keypair = read_keypair_file(DEV_WALLET).expect("Could not find the wallet, make sure you generated the dev-wallet.json file with correct wallet");
 
         let client = RpcClient::new(RPC_URL);
         match client.request_airdrop(&keypair.pubkey(), 2_000_000_000u64) {
@@ -43,11 +47,9 @@ mod tests {
 
     #[test]
     fn transfer_sol() {
-        let keypair = read_keypair_file("dev-wallet.json").expect("Error if not find");
+        let keypair = read_keypair_file(DEV_WALLET).expect("Error if not find");
 
-        let to_pubkey = Pubkey::from_str("CJM2LnrH6byLP2ExkwvZRgTyhAM1xaJffHRS5Q3A68S").unwrap();
-        
-        const RPC_URL: &str = "https://api.devnet.solana.com";
+        let to_pubkey = Pubkey::from_str(TURBIN3_WALLET_PKEY).unwrap();
 
         let rpc_client = RpcClient::new(RPC_URL);
 
@@ -84,17 +86,13 @@ mod tests {
 
     #[test]
     fn enroll() {
-        let signer = read_keypair_file("turbin3-wallet.json").expect("Couldn't find wallet file");
+        let signer = read_keypair_file(TURBIN3_WALLET).expect("Couldn't find wallet file");
         
         let prereq = WbaPrereqProgram::derive_program_address(&[b"prereq",signer.pubkey().to_bytes().as_ref()]);
-
-        // println!("The prereq is {}", prereq.to_string());
 
         let args = CompleteArgs{
             github: b"rauberJv".to_vec()
         };
-
-        const RPC_URL: &str = "https://api.devnet.solana.com";
 
         let rpc_client = RpcClient::new(RPC_URL);
 
